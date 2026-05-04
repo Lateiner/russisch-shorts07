@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Memory: Paare finden</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-back: #3498db;
+            --card-front: #ffffff;
+            --success: #2ecc71;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 { color: var(--text-color); margin-bottom: 10px; text-align: center; }
+        .info { margin-bottom: 20px; color: #666; text-align: center; max-width: 400px; }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 Spalten von links nach rechts */
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            background-color: var(--card-back);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: transparent; /* Text versteckt */
+            transition: background-color 0.3s, opacity 1s ease-out, transform 0.2s;
+            user-select: none;
+            text-align: center;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Wenn die Karte umgedreht wird */
+        .card.flipped {
+            background-color: var(--card-front);
+            color: var(--text-color); /* Text lesbar von links nach rechts */
+            border: 3px solid var(--card-back);
+            transform: scale(1.05);
+        }
+
+        /* Wenn ein Paar gefunden wurde */
+        .card.matched {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease-out; /* Langsames Verschwinden */
+        }
+
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #status {
+            font-weight: bold;
+            color: var(--success);
+            margin-bottom: 15px;
+            height: 20px;
+        }
+
+        .btn-restart {
+            padding: 12px 25px;
+            background-color: var(--text-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .btn-restart:hover { background-color: #34495e; }
+
+        /* Mobil-Optimierung */
+        @media (max-width: 480px) {
+            .memory-grid { grid-template-columns: repeat(3, 1fr); }
+            .card { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Vokabel-Memory</h2>
+    <p class="info">Finde die zusammengehörigen Paare. Gefundene Karten lösen sich langsam auf.</p>
+
+    <div class="memory-grid" id="grid"></div>
+
+    <div class="controls">
+        <div id="status"></div>
+        <button class="btn-restart" onclick="startGame()">Spiel neu starten</button>
+    </div>
+
+    <script>
+        const pairs = [
+            { ru: 'На', de: 'Hier!' },
+            { ru: 'На', de: 'Nimm!' },
+            { ru: 'На', de: 'Da!' },
+            { ru: 'Держи', de: 'Halt fest!' },
+            { ru: 'Держи', de: 'Halt mal!' },
+            { ru: 'Держи', de: 'Nimm (aktiv)!' }
+        ];
+
+        let flippedCards = [];
+        let matchedCount = 0;
+        let isProcessing = false;
+
+        function startGame() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            flippedCards = [];
+            matchedCount = 0;
+            isProcessing = false;
+            document.getElementById('status').innerText = "";
+
+            // Karten-Array aufbauen
+            let cardData = [];
+            pairs.forEach((pair, index) => {
+                cardData.push({ text: pair.ru, matchId: index });
+                cardData.push({ text: pair.de, matchId: index });
+            });
+
+            // Zufällig mischen
+            cardData.sort(() => Math.random() - 0.5);
+
+            // Karten-Elemente erzeugen
+            cardData.forEach((data) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.matchId = data.matchId;
+                card.innerText = data.text;
+                card.onclick = () => flipCard(card);
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (isProcessing || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                isProcessing = true;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.matchId === card2.dataset.matchId;
+
+            if (isMatch) {
+                setTimeout(() => {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedCount++;
+                    flippedCards = [];
+                    isProcessing = false;
+                    
+                    if (matchedCount === pairs.length) {
+                        document.getElementById('status').innerText = "Hervorragend! Alle Paare gefunden.";
+                    }
+                }, 600);
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    isProcessing = false;
+                }, 1000);
+            }
+        }
+
+        // Spiel beim ersten Laden initialisieren
+        startGame();
+    </script>
+</body>
+</html>
