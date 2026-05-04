@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zuordnung: Bedeutungsebenen</title>
+    <style>
+        :root {
+            --primary: #4a69bd;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f1f2f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .matching-card {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: var(--primary); text-align: center; }
+        .desc { text-align: center; color: #636e72; margin-bottom: 25px; font-size: 0.95rem; }
+
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .item {
+            padding: 15px;
+            background: #fff;
+            border: 2px solid #dcdde1;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .item.selected { 
+            border-color: var(--primary); 
+            background: #e1e7f5; 
+            transform: scale(1.02);
+        }
+
+        .item.matched { 
+            border-color: var(--success); 
+            background: var(--success);
+            color: white;
+            transform: scale(0.5);
+            opacity: 0; 
+            pointer-events: none;
+        }
+
+        .item.wrong {
+            border-color: var(--error);
+            background: #fdedec;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-restart {
+            padding: 10px 25px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+        }
+
+        #feedback { font-weight: bold; height: 25px; margin-bottom: 10px; text-align: center; }
+
+        @media (max-width: 500px) {
+            .matching-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="matching-card">
+    <h2>Bedeutungen verbinden</h2>
+    <p class="desc">Klicke eine Nuance und dann das passende Wort. Achte auf die Satzzeichen!</p>
+
+    <div id="feedback"></div>
+
+    <div class="matching-grid">
+        <!-- Linke Spalte: Nuancen -->
+        <div class="column">
+            <div class="item" data-id="1" onclick="select(this, 'L')">Wörtlich: „Nimm!“ (Höflich)</div>
+            <div class="item" data-id="2" onclick="select(this, 'L')">Fokus: „Festhalten / Greifen“</div>
+            <div class="item" data-id="3" onclick="select(this, 'L')">Wörtlich: „Auf!“ (Reichen)</div>
+            <div class="item" data-id="4" onclick="select(this, 'L')">Fokus: „Übernahme einer Last“</div>
+        </div>
+
+        <!-- Rechte Spalte: Russische Wörter -->
+        <div class="column">
+            <div class="item" data-id="3" onclick="select(this, 'R')">Держи!</div>
+            <div class="item" data-id="1" onclick="select(this, 'R')">Возьмите!</div>
+            <div class="item" data-id="4" onclick="select(this, 'R')">На</div>
+            <div class="item" data-id="2" onclick="select(this, 'R')">Держи</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="restartBtn" class="btn-restart" onclick="location.reload()">Noch einmal spielen</button>
+    </div>
+</div>
+
+<script>
+    let leftSel = null;
+    let rightSel = null;
+    let count = 0;
+
+    function select(el, side) {
+        if (el.classList.contains('matched')) return;
+
+        if (side === 'L') {
+            if (leftSel) leftSel.classList.remove('selected');
+            leftSel = el;
+        } else {
+            if (rightSel) rightSel.classList.remove('selected');
+            rightSel = el;
+        }
+        el.classList.add('selected');
+
+        if (leftSel && rightSel) {
+            check();
+        }
+    }
+
+    function check() {
+        const fb = document.getElementById('feedback');
+        const l = leftSel;
+        const r = rightSel;
+
+        if (l.dataset.id === r.dataset.id) {
+            fb.innerText = "Korrekt! ✓";
+            fb.style.color = "var(--success)";
+            
+            l.classList.add('matched');
+            r.classList.add('matched');
+            
+            count++;
+            if (count === 4) {
+                setTimeout(() => {
+                    fb.innerText = "Hervorragend! Alles zugeordnet. 🎉";
+                    document.getElementById('restartBtn').style.display = 'inline-block';
+                }, 800);
+            }
+        } else {
+            fb.innerText = "Das passt nicht zusammen. ✗";
+            fb.style.color = "var(--error)";
+            l.classList.add('wrong');
+            r.classList.add('wrong');
+            
+            setTimeout(() => {
+                l.classList.remove('selected', 'wrong');
+                r.classList.remove('selected', 'wrong');
+            }, 500);
+        }
+        
+        leftSel = null;
+        rightSel = null;
+    }
+</script>
+
+</body>
+</html>
