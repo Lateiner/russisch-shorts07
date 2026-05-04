@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Hörverstehen: На oder Держи</title>
+    <style>
+        :root {
+            --primary-bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .audio-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 2rem;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: transform 0.2s, background 0.3s;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .audio-btn:hover { transform: scale(1.1); }
+        .audio-btn:active { transform: scale(0.95); }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .option-btn {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: #f7fbfe;
+        }
+
+        .option-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            height: 1.5rem;
+        }
+
+        .stats {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .reset-btn {
+            margin-top: 25px;
+            background: none;
+            border: 1px solid #bdc3c7;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .reset-btn:hover { background: #eee; }
+
+        @media (max-width: 400px) {
+            .option-btn { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h2>Hörverstehen</h2>
+    <p>Klicke auf den Lautsprecher und wähle das Wort, das du hörst.</p>
+    
+    <button class="audio-btn" onclick="playCurrentWord()" title="Wort anhören">🔊</button>
+    
+    <div class="feedback" id="feedback"></div>
+
+    <div class="options">
+        <button class="option-btn" onclick="checkAnswer('На')" id="btn-На">На</button>
+        <button class="option-btn" onclick="checkAnswer('Держи')" id="btn-Держи">Держи</button>
+    </div>
+
+    <div class="stats" id="stats">Runde: 1 / 10</div>
+    <button class="reset-btn" onclick="initGame()">Neustart</button>
+</div>
+
+<script>
+    const vocabulary = ['На', 'Держи'];
+    let currentWord = '';
+    let round = 1;
+    let score = 0;
+    const maxRounds = 10;
+    let canAnswer = true;
+
+    // Initialisierung der Sprachausgabe
+    const synth = window.speechSynthesis;
+
+    function initGame() {
+        round = 1;
+        score = 0;
+        canAnswer = true;
+        document.getElementById('feedback').innerText = '';
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.className = 'option-btn';
+            btn.disabled = false;
+        });
+        nextRound();
+    }
+
+    function nextRound() {
+        if (round > maxRounds) {
+            finishGame();
+            return;
+        }
+        canAnswer = true;
+        document.getElementById('stats').innerText = `Runde: ${round} / ${maxRounds}`;
+        document.getElementById('feedback').innerText = '';
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.className = 'option-btn';
+        });
+        
+        // Zufälliges Wort wählen
+        currentWord = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        
+        // Kurze Verzögerung für das erste Abspielen in einer neuen Runde
+        setTimeout(playCurrentWord, 300);
+    }
+
+    function playCurrentWord() {
+        // Stop laufende Sprachausgabe
+        synth.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(currentWord);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 0.8; // Etwas langsamer für Lernende
+        synth.speak(utterance);
+    }
+
+    function checkAnswer(selected) {
+        if (!canAnswer) return;
+        canAnswer = false;
+
+        const correct = selected === currentWord;
+        const btn = document.getElementById(`btn-${selected}`);
+        const feedback = document.getElementById('feedback');
+
+        if (correct) {
+            btn.classList.add('correct');
+            feedback.innerText = "Richtig! ✨";
+            feedback.style.color = "var(--success)";
+            score++;
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerText = `Leider falsch. Das war "${currentWord}".`;
+            feedback.style.color = "var(--error)";
+            // Zeige auch den richtigen Button kurz an
+            document.getElementById(`btn-${currentWord}`).classList.add('correct');
+        }
+
+        round++;
+        setTimeout(nextRound, 1800);
+    }
+
+    function finishGame() {
+        document.getElementById('feedback').innerText = `Fertig! Ergebnis: ${score} von ${maxRounds}`;
+        document.getElementById('feedback').style.color = "var(--text)";
+        document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+        document.getElementById('stats').innerText = "Spiel beendet.";
+    }
+
+    // Start
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
