@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch A1: Sofort-Feedback</title>
+    <style>
+        :root {
+            --primary: #4a69bd;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+            --text: #2f3640;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .exercise-card {
+            background: white;
+            max-width: 650px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h2 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .instruction { text-align: center; color: #718093; margin-bottom: 30px; }
+
+        .situation {
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .situation-title {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .dialog-line { margin-bottom: 15px; }
+        .name { font-weight: bold; }
+
+        /* Dropdown & Feedback Container */
+        .input-group {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            margin: 0 5px;
+        }
+
+        select {
+            padding: 6px 10px;
+            font-size: 1rem;
+            border: 2px solid #dcdde1;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        select.correct { border-color: var(--success); background-color: #dff9fb; color: var(--success); }
+        select.wrong { border-color: var(--error); background-color: #fdedec; color: var(--error); }
+
+        .item-feedback {
+            font-size: 0.75rem;
+            font-weight: bold;
+            height: 14px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-restart {
+            padding: 10px 30px;
+            background-color: #b2bec3;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-restart:hover { background-color: #636e72; }
+
+        @media (max-width: 480px) {
+            .dialog-line { line-height: 2.2; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="exercise-card">
+    <h2>Lückentext-Training</h2>
+    <p class="instruction">Wähle die richtige Antwort. Das Feedback erscheint sofort.</p>
+
+    <!-- Situation 1 -->
+    <div class="situation">
+        <span class="situation-title">Situation 1: Freunde</span>
+        <div class="dialog-line">
+            <span class="name">Maxim:</span> Hier, ein Sandwich für dich. 
+            <div class="input-group">
+                <select class="gap" data-answer="На" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div> , пожалуйста!
+        </div>
+        <div class="dialog-line">
+            <span class="name">Elena:</span> Danke! Halt mal kurz mein Handy. 
+            <div class="input-group">
+                <select class="gap" data-answer="Держи" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div> !
+        </div>
+    </div>
+
+    <!-- Situation 2 -->
+    <div class="situation">
+        <span class="situation-title">Situation 2: Schule</span>
+        <div class="dialog-line">
+            <span class="name">Lehrer:</span> Sascha, hier ist dein Buch. 
+            <div class="input-group">
+                <select class="gap" data-answer="На" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div>.
+        </div>
+        <div class="dialog-line">
+            <span class="name">Sascha:</span> Danke. Katja, hier ist ein Stift. 
+            <div class="input-group">
+                <select class="gap" data-answer="На" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div>.
+        </div>
+    </div>
+
+    <!-- Situation 3 -->
+    <div class="situation">
+        <span class="situation-title">Situation 3: Formell</span>
+        <div class="dialog-line">
+            <span class="name">Verkäuferin:</span> Hier ist Ihr Wechselgeld. 
+            <div class="input-group">
+                <select class="gap" data-answer="Возьмите" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div>, пожалуйста.
+        </div>
+        <div class="dialog-line">
+            <span class="name">Kunde:</span> Danke. Und hier ist mein Korb. 
+            <div class="input-group">
+                <select class="gap" data-answer="Возьмите" onchange="checkIndividual(this)">
+                    <option value="">--?--</option>
+                    <option value="На">На</option>
+                    <option value="Держи">Держи</option>
+                    <option value="Возьмите">Возьмите</option>
+                </select>
+                <div class="item-feedback"></div>
+            </div>.
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn-restart" onclick="resetExercise()">Alles zurücksetzen</button>
+    </div>
+</div>
+
+<script>
+    function checkIndividual(selectElement) {
+        const selectedValue = selectElement.value;
+        const correctAnswer = selectElement.getAttribute('data-answer');
+        const feedbackDiv = selectElement.nextElementSibling;
+
+        if (selectedValue === "") {
+            selectElement.classList.remove('correct', 'wrong');
+            feedbackDiv.innerText = "";
+            return;
+        }
+
+        if (selectedValue === correctAnswer) {
+            selectElement.classList.remove('wrong');
+            selectElement.classList.add('correct');
+            feedbackDiv.innerText = "✓ Richtig";
+            feedbackDiv.style.color = "var(--success)";
+        } else {
+            selectElement.classList.remove('correct');
+            selectElement.classList.add('wrong');
+            feedbackDiv.innerText = "✗ Falsch";
+            feedbackDiv.style.color = "var(--error)";
+        }
+    }
+
+    function resetExercise() {
+        const gaps = document.querySelectorAll('.gap');
+        const feedbacks = document.querySelectorAll('.item-feedback');
+        
+        gaps.forEach(select => {
+            select.value = "";
+            select.classList.remove('correct', 'wrong');
+        });
+        feedbacks.forEach(f => f.innerText = "");
+    }
+</script>
+
+</body>
+</html>
