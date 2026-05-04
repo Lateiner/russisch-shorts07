@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Swipe-Challenge</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --wrong: #e74c3c;
+            --correct: #2ecc71;
+            --primary: #3498db;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .header {
+            position: absolute;
+            top: 20px;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .swipe-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: transform 0.3s ease, opacity 0.3s;
+            cursor: grab;
+            user-select: none;
+            z-index: 2;
+        }
+
+        .card h2 {
+            font-size: 3rem;
+            color: var(--primary);
+            margin: 0 0 20px 0;
+        }
+
+        .card p {
+            font-size: 1.2rem;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        /* Ergebnis-Ansicht */
+        .result-view {
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn-restart {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .btn-restart:hover { background-color: #34495e; }
+
+        .controls {
+            margin-top: 50px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .btn-swipe {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .btn-wrong { background-color: var(--wrong); }
+        .btn-correct { background-color: var(--correct); }
+        .btn-swipe:active { transform: scale(0.9); }
+
+        .score-display {
+            position: absolute;
+            bottom: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .stamp {
+            position: absolute;
+            top: 20px;
+            padding: 5px 15px;
+            border: 4px solid;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 2rem;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .stamp-correct { left: 20px; border-color: var(--correct); color: var(--correct); transform: rotate(-20deg); }
+        .stamp-wrong { right: 20px; border-color: var(--wrong); color: var(--wrong); transform: rotate(20deg); }
+
+        @media (max-width: 350px) {
+            .swipe-container { width: 260px; height: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>Richtig oder Falsch?</h3>
+        <p>Passt das Wort zur Situation?<br>Links = Falsch | Rechts = Richtig</p>
+    </div>
+
+    <div class="swipe-container" id="swipeContainer">
+        <!-- Karten werden hier geladen -->
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="btn-swipe btn-wrong" onclick="handleBtn(false)">✖</button>
+        <button class="btn-swipe btn-correct" onclick="handleBtn(true)">✔</button>
+    </div>
+
+    <div class="score-display" id="score">Score: 0 / 0</div>
+
+    <script>
+        const situations = [
+            { word: "На", context: "In einer formellen Geschäftssituation mit einem Kunden.", correct: false },
+            { word: "На", context: "Du reichst deinem besten Freund einen Keks.", correct: true },
+            { word: "Держи", context: "Du gibst deiner Schwester eine schwere Kiste zum Halten.", correct: true },
+            { word: "Держи", context: "Höfliche Begrüßung einer älteren unbekannten Dame.", correct: false },
+            { word: "На", context: "Du wirfst jemandem aus der Ferne einen Ball zu.", correct: false },
+            { word: "Держи", context: "Du reichst einem Freund den Schlüssel, während du sagst: 'Fang!'", correct: true },
+            { word: "Держи", context: "Du bist Kellner und servierst einem Gast die Suppe.", correct: false },
+            { word: "На", context: "Du gibst einem Kind ein kleines Spielzeugauto.", correct: true }
+        ];
+
+        let currentIdx = 0;
+        let score = 0;
+        let isMoving = false;
+
+        function initGame() {
+            currentIdx = 0;
+            score = 0;
+            document.getElementById('score').innerText = `Score: 0 / 0`;
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('swipeContainer').innerHTML = "";
+            createCard();
+        }
+
+        function createCard() {
+            if (currentIdx >= situations.length) {
+                showFinalResult();
+                return;
+            }
+
+            const data = situations[currentIdx];
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = 'activeCard';
+            card.innerHTML = `
+                <div class="stamp stamp-correct">RICHTIG</div>
+                <div class="stamp stamp-wrong">FALSCH</div>
+                <h2>${data.word}</h2>
+                <p>${data.context}</p>
+            `;
+
+            document.getElementById('swipeContainer').appendChild(card);
+            initDrag(card);
+        }
+
+        function showFinalResult() {
+            document.getElementById('controls').style.display = 'none';
+            const container = document.getElementById('swipeContainer');
+            container.innerHTML = `
+                <div class="result-view">
+                    <h2>Fertig!</h2>
+                    <p>Dein Ergebnis: <b>${score} von ${situations.length}</b></p>
+                    <button class="btn-restart" onclick="initGame()">Neustart</button>
+                </div>
+            `;
+        }
+
+        function handleBtn(choice) {
+            if (isMoving) return;
+            const card = document.getElementById('activeCard');
+            if (!card) return;
+            processResult(situations[currentIdx].correct === choice, choice ? 1000 : -1000);
+        }
+
+        function processResult(isCorrect, moveX) {
+            isMoving = true;
+            const card = document.getElementById('activeCard');
+            if (isCorrect) score++;
+            
+            document.getElementById('score').innerText = `Score: ${score} / ${currentIdx + 1}`;
+            card.style.transform = `translateX(${moveX}px) rotate(${moveX/10}deg)`;
+            card.style.opacity = '0';
+
+            setTimeout(() => {
+                card.remove();
+                currentIdx++;
+                isMoving = false;
+                createCard();
+            }, 300);
+        }
+
+        function initDrag(card) {
+            let startX = 0;
+            let currentX = 0;
+
+            const onStart = (e) => {
+                if (isMoving) return;
+                startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                card.style.transition = 'none';
+            };
+
+            const onMove = (e) => {
+                if (startX === 0 || isMoving) return;
+                currentX = (e.type.includes('touch') ? e.touches[0].clientX : e.clientX) - startX;
+                card.style.transform = `translateX(${currentX}px) rotate(${currentX/10}deg)`;
+
+                const sCorrect = card.querySelector('.stamp-correct');
+                const sWrong = card.querySelector('.stamp-wrong');
+                if (currentX > 20) {
+                    sCorrect.style.opacity = Math.min(currentX/100, 1);
+                    sWrong.style.opacity = 0;
+                } else if (currentX < -20) {
+                    sWrong.style.opacity = Math.min(-currentX/100, 1);
+                    sCorrect.style.opacity = 0;
+                }
+            };
+
+            const onEnd = () => {
+                if (startX === 0 || isMoving) return;
+                card.style.transition = 'transform 0.3s ease, opacity 0.3s';
+                if (currentX > 100) processResult(situations[currentIdx].correct === true, 1000);
+                else if (currentX < -100) processResult(situations[currentIdx].correct === false, -1000);
+                else {
+                    card.style.transform = 'translateX(0) rotate(0)';
+                    card.querySelector('.stamp-correct').style.opacity = 0;
+                    card.querySelector('.stamp-wrong').style.opacity = 0;
+                }
+                startX = 0; currentX = 0;
+            };
+
+            card.addEventListener('mousedown', onStart);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+            card.addEventListener('touchstart', onStart);
+            document.addEventListener('touchmove', onMove);
+            document.addEventListener('touchend', onEnd);
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
