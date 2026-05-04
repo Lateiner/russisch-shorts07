@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprech-O-Meter: Nuancen-Check</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f1f2f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .meter-card {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 { color: var(--primary); margin-bottom: 5px; }
+        .instruction { color: #636e72; margin-bottom: 25px; font-size: 0.9rem; }
+
+        /* Wort-Pool */
+        .word-pool {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            min-height: 50px;
+            flex-wrap: wrap;
+        }
+
+        .draggable-word {
+            padding: 12px 20px;
+            background: #fff;
+            border: 2px solid var(--accent);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--accent);
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            user-select: none;
+        }
+
+        .draggable-word:hover { background: #ebf5fb; }
+        .draggable-word.selected { background: var(--accent); color: white; transform: translateY(-3px); }
+
+        /* Die Skala */
+        .scale-wrapper { position: relative; margin: 60px 0 30px 0; }
+
+        .scale-container {
+            height: 60px;
+            background: linear-gradient(90deg, #dcdde1 0%, #3498db 50%, #2c3e50 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            gap: 5px;
+        }
+
+        .scale-label {
+            position: absolute;
+            top: -45px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            width: 45%;
+            line-height: 1.2;
+        }
+        .label-left { left: 0; text-align: left; }
+        .label-right { right: 0; text-align: right; }
+
+        .drop-zone {
+            flex: 1;
+            height: 100%;
+            border: 2px dashed rgba(255,255,255,0.4);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .placed-word {
+            background: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            animation: pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+        #feedback { font-weight: bold; min-height: 1.5rem; margin-top: 15px; }
+
+        .btn-reset {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #bdc3c7;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @media (max-width: 480px) {
+            .scale-label { font-size: 0.65rem; top: -50px; }
+            .draggable-word { font-size: 0.85rem; padding: 10px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="meter-card">
+    <h2>Sprech-O-Meter</h2>
+    <p class="instruction">Wähle ein Wort und klicke auf die passende Stelle der Skala.</p>
+
+    <div class="word-pool" id="wordPool">
+        <!-- Wörter werden per JS gemischt eingefügt -->
+    </div>
+
+    <div class="scale-wrapper">
+        <span class="scale-label label-left">Informell /<br>Sehr kurz</span>
+        <span class="scale-label label-right">Höflich /<br>Bildhaft</span>
+        
+        <div class="scale-container">
+            <div class="drop-zone" data-correct="1" onclick="handleZoneClick(this)"></div>
+            <div class="drop-zone" data-correct="2" onclick="handleZoneClick(this)"></div>
+            <div class="drop-zone" data-correct="3" onclick="handleZoneClick(this)"></div>
+        </div>
+    </div>
+
+    <div id="feedback"></div>
+    <button class="btn-reset" onclick="initGame()">Zurücksetzen & Mischen</button>
+</div>
+
+<script>
+    const words = [
+        { id: "1", text: "На" },
+        { id: "2", text: "Держи" },
+        { id: "3", text: "Возьмите" }
+    ];
+
+    let selectedWordEl = null;
+    let placedCount = 0;
+
+    function initGame() {
+        const pool = document.getElementById('wordPool');
+        const feedback = document.getElementById('feedback');
+        const zones = document.querySelectorAll('.drop-zone');
+        
+        // Reset
+        pool.innerHTML = '';
+        feedback.innerText = '';
+        placedCount = 0;
+        selectedWordEl = null;
+        zones.forEach(z => z.innerHTML = '');
+
+        // Wörter mischen (Fisher-Yates Shuffle)
+        const shuffled = [...words].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach(word => {
+            const div = document.createElement('div');
+            div.className = 'draggable-word';
+            div.innerText = word.text;
+            div.dataset.id = word.id;
+            div.onclick = () => selectWord(div);
+            pool.appendChild(div);
+        });
+    }
+
+    function selectWord(el) {
+        document.querySelectorAll('.draggable-word').forEach(w => w.classList.remove('selected'));
+        selectedWordEl = el;
+        el.classList.add('selected');
+        document.getElementById('feedback').innerText = "Jetzt wähle einen Platz auf der Skala.";
+        document.getElementById('feedback').style.color = "var(--primary)";
+    }
+
+    function handleZoneClick(zone) {
+        if (!selectedWordEl || zone.children.length > 0) return;
+
+        const isCorrect = selectedWordEl.dataset.id === zone.dataset.correct;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            const placed = document.createElement('div');
+            placed.className = 'placed-word';
+            placed.innerText = selectedWordEl.innerText;
+            zone.appendChild(placed);
+            
+            selectedWordEl.style.visibility = 'hidden';
+            selectedWordEl = null;
+            placedCount++;
+            
+            fb.innerText = "Korrekt! ✓";
+            fb.style.color = "var(--success)";
+
+            if (placedCount === 3) {
+                fb.innerText = "Hervorragend! Die Skala ist perfekt. 🎉";
+            }
+        } else {
+            fb.innerText = "Probiere einen anderen Platz! ✗";
+            fb.style.color = "var(--error)";
+        }
+    }
+
+    // Start
+    initGame();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Choice: Russisch Quiz</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-card {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 100%;
+            background: var(--accent);
+            width: 16.66%;
+            transition: width 0.3s ease;
+        }
+
+        .word-display {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            color: #636e72;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .image-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            border: 3px solid #f1f2f6;
+            border-radius: 20px;
+            padding: 30px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .emoji {
+            font-size: 4rem;
+        }
+
+        .option:hover {
+            border-color: var(--accent);
+            background: #f7f9fc;
+        }
+
+        .option.correct { border-color: var(--success); background: #e8f8f5; }
+        .option.wrong { border-color: var(--error); opacity: 0.6; }
+
+        .feedback-area {
+            min-height: 80px;
+            padding: 10px;
+        }
+
+        #feedback-text {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .btn-action {
+            margin-top: 10px;
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+        }
+
+        @media (max-width: 400px) {
+            .emoji { font-size: 3rem; }
+            .word-display { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div class="progress-bar"><div id="progress"></div></div>
+    <div class="instruction" id="task-desc">Welches Emoji passt besser?</div>
+    <div class="word-display" id="current-word">Держи</div>
+
+    <div class="image-container" id="options-grid">
+        <!-- Wird per JavaScript befüllt -->
+    </div>
+
+    <div class="feedback-area">
+        <div id="feedback-text"></div>
+        <button class="btn-action" id="action-btn" onclick="nextQuestion()">Nächste Aufgabe</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            word: "Держи",
+            desc: "Bedeutung: „Festhalten / Greifen“",
+            options: [
+                { emoji: "👉", label: "Zeigen", correct: false },
+                { emoji: "✊", label: "Greifen", correct: true }
+            ],
+            feedback: "Richtig! „Дerzhi“ meint das aktive Zupacken oder Halten."
+        },
+        {
+            word: "На",
+            desc: "Bedeutung: „Hier, nimm!“ (kurz)",
+            options: [
+                { emoji: "🤲", label: "Überreichen", correct: true },
+                { emoji: "🏋️", label: "Last tragen", correct: false }
+            ],
+            feedback: "Korrekt! „Na“ ist die schnellste Art, jemandem etwas hinzuhalten."
+        },
+        {
+            word: "Держи!",
+            desc: "Bedeutung: „Auf!“ (beim Zuwerfen)",
+            options: [
+                { emoji: "🔭", label: "Beobachten", correct: false },
+                { emoji: "🙋‍♂️", label: "Fangen!", correct: true }
+            ],
+            feedback: "Genau! Wenn man jemandem etwas zuwirft, ruft man „Дerzhi!“"
+        },
+        {
+            word: "Возьмите",
+            desc: "Bedeutung: „Nehmen Sie“ (Höflich)",
+            options: [
+                { emoji: "🤝", label: "Förmlich", correct: true },
+                { emoji: "🤳", label: "Selfie machen", correct: false }
+            ],
+            feedback: "Richtig. Die Endung -te macht es zur höflichen Form für Fremde oder Gruppen."
+        },
+        {
+            word: "Держи",
+            desc: "Bedeutung: „Behalte es“",
+            options: [
+                { emoji: "💰", label: "Behalten", correct: true },
+                { emoji: "💸", label: "Ausgeben", correct: false }
+            ],
+            feedback: "Stimmt! „Дerzhi“ kann auch bedeuten, dass man das Wechselgeld behalten darf."
+        },
+        {
+            word: "На!",
+            desc: "Bedeutung: „Da hast du es!“",
+            options: [
+                { emoji: "🎁", label: "Geben", correct: true },
+                { emoji: "🔍", label: "Suchen", correct: false }
+            ],
+            feedback: "Sehr gut! „Na“ ist die rein fokussierte Handlung des Gebens."
+        }
+    ];
+
+    let currentIdx = 0;
+    let answered = false;
+
+    function initQuestion() {
+        answered = false;
+        const q = questions[currentIdx];
+        document.getElementById('current-word').innerText = q.word;
+        document.getElementById('task-desc').innerText = q.desc;
+        document.getElementById('feedback-text').innerText = "";
+        document.getElementById('action-btn').style.display = "none";
+        document.getElementById('progress').style.width = ((currentIdx + 1) / questions.length * 100) + "%";
+
+        const grid = document.getElementById('options-grid');
+        grid.innerHTML = '';
+
+        q.options.forEach((opt, index) => {
+            const div = document.createElement('div');
+            div.className = 'option';
+            div.innerHTML = `<span class="emoji">${opt.emoji}</span><span>${opt.label}</span>`;
+            div.onclick = () => checkAnswer(div, opt.correct);
+            grid.appendChild(div);
+        });
+    }
+
+    function checkAnswer(el, isCorrect) {
+        if (answered) return;
+        answered = true;
+
+        const q = questions[currentIdx];
+        const fb = document.getElementById('feedback-text');
+        const btn = document.getElementById('action-btn');
+
+        if (isCorrect) {
+            el.classList.add('correct');
+            fb.innerText = q.feedback;
+            fb.style.color = "var(--success)";
+        } else {
+            el.classList.add('wrong');
+            fb.innerText = "Nicht ganz. Überleg noch mal!";
+            fb.style.color = "var(--error)";
+        }
+
+        btn.style.display = "inline-block";
+        if (currentIdx === questions.length - 1) {
+            btn.innerText = "Ergebnis anzeigen";
+        }
+    }
+
+    function nextQuestion() {
+        if (currentIdx < questions.length - 1) {
+            currentIdx++;
+            initQuestion();
+        } else {
+            document.querySelector('.quiz-card').innerHTML = `
+                <span style="font-size: 5rem;">🏆</span>
+                <h2>Super gemacht!</h2>
+                <p>Du hast alle 6 Nuancen-Checks durchlaufen.</p>
+                <button class="btn-action" style="display:inline-block" onclick="location.reload()">Nochmal starten</button>
+            `;
+        }
+    }
+
+    initQuestion();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vokabel-Lernkartei: Russisch Nuancen</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --dark-green: #1e8449;
+            --light-green: #e9f7ef;
+            --bg-color: #f1f2f6;
+            --text-color: #2c3e50;
+            --card-front: #ffffff;
+            --card-back: #d5f5e3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--dark-green);
+            margin-bottom: 5px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            perspective: 1000px; /* Für 3D Effekt */
+        }
+
+        /* Karteikarten-Struktur */
+        .card-wrapper {
+            width: 100%;
+            height: 350px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-wrapper.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            box-sizing: border-box;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid var(--primary-green);
+        }
+
+        .card-front {
+            background-color: var(--card-front);
+        }
+
+        .card-back {
+            background-color: var(--card-back);
+            transform: rotateY(180deg);
+        }
+
+        .vocab-text {
+            font-size: 2rem;
+            font-weight: bold;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Fortschrittsanzeige */
+        .progress {
+            margin: 20px 0;
+            font-weight: bold;
+            color: var(--dark-green);
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .nav-buttons, .tool-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            grid-column: span 2;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            transition: all 0.2s;
+            background-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+
+        button:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .secondary {
+            background-color: #95a5a6;
+        }
+
+        .secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 480px) {
+            .card-wrapper { height: 300px; }
+            .vocab-text { font-size: 1.5rem; }
+            .controls { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Russisch Nuancen</h1>
+    <p>Lernkartei: Auf!, Nimm!, Halten!</p>
+</header>
+
+<div class="progress" id="progressText">1 / 30</div>
+
+<div class="container">
+    <div class="card-wrapper" id="card" onclick="flipCard()">
+        <!-- Vorderseite -->
+        <div class="card-face card-front">
+            <div class="vocab-text" id="frontText">на</div>
+            <div class="note" id="frontNote"></div>
+        </div>
+        <!-- Rückseite -->
+        <div class="card-face card-back">
+            <div class="vocab-text" id="backText">hier!, nimm!</div>
+            <div class="note" id="backNote">(sehr informell/kurz)</div>
+        </div>
+    </div>
+</div>
+
+<div class="progress" style="margin-top: 10px;">
+    <small>Tipp: Nutze Leertaste zum Umdrehen, Pfeiltasten zum Navigieren.</small>
+</div>
+
+<div class="controls">
+    <div class="nav-buttons">
+        <button onclick="prevCard()">← Vorherige</button>
+        <button onclick="nextCard()">Nächste →</button>
+    </div>
+    <div class="tool-buttons">
+        <button class="secondary" onclick="resetToStart()">An den Anfang</button>
+        <button class="secondary" onclick="shuffleCards()">Mischen 🎲</button>
+    </div>
+</div>
+
+<script>
+    // Die Vokabelliste
+    const rawData = [
+        ["на", "hier!, nimm!", "", "(sehr informell/kurz)"],
+        ["держáть (nsv) / подержáть (sv)", "halten", "", ""],
+        ["держáться (nsv) / подержáться (sv)", "sich festhalten", "", ""],
+        ["держѝ!", "halt mal!, fass an!, fange!", "", ""],
+        ["брать (nsv) / взять (sv)", "nehmen", "", ""],
+        ["берѝ!", "nimm!", "(du-form, nsv)", ""],
+        ["возьмѝ!", "nimm!", "(du-form, sv)", ""],
+        ["возьмѝте!", "nehmen sie! / nehmt!", "", "(höflich / plural)"],
+        ["давáть (nsv) / дать (sv)", "geben", "", ""],
+        ["давáй!", "gib!, komm schon!, lass uns...!", "", ""],
+        ["дай!", "gib!", "(du-form)", ""],
+        ["ловѝть (nsv) / пойма́ть (sv)", "fangen", "", ""],
+        ["ловѝ!", "fang!", "", ""],
+        ["передáть (sv)", "übergeben, reichen", "", ""],
+        ["переда́йте, пожáлуйста", "reichen sie bitte", "", ""],
+        ["протягѝвать (nsv) / протянýть (sv)", "hinreichen, ausstrecken", "", ""],
+        ["хватáть (nsv) / хватѝть (sv)", "greifen, packen", "", ""],
+        ["оставлáть (nsv) / остáвить (sv)", "lassen, übrig lassen", "", ""],
+        ["сдáча", "das Wechselgeld", "", ""],
+        ["остáвьте сдáчу себе́", "behalten sie das Wechselgeld", "", ""],
+        ["грýз", "die Last", "", ""],
+        ["тяжёлый", "schwer", "", "(gewicht)"],
+        ["пóмощь (f)", "die Hilfe", "", ""],
+        ["pomogát' (nsv) / pomóch' (sv)", "helfen", "помогáть / помóчь", ""],
+        ["вещь (f)", "die Sache, der Gegenstand", "", ""],
+        ["подáрок", "das Geschenk", "", ""],
+        ["рýка", "die Hand, der Arm", "", ""],
+        ["взять в рýки", "in die Hände nehmen", "", ""],
+        ["вéжливый", "höflich", "", ""],
+        ["дрýжеский", "freundschaftlich", "", ""]
+    ];
+
+    let cards = rawData.map(item => ({
+        front: item[0],
+        back: item[1],
+        frontNote: item[2],
+        backNote: item[3]
+    }));
+
+    let currentIndex = 0;
+    const cardEl = document.getElementById('card');
+    const frontTextEl = document.getElementById('frontText');
+    const frontNoteEl = document.getElementById('frontNote');
+    const backTextEl = document.getElementById('backText');
+    const backNoteEl = document.getElementById('backNote');
+    const progressEl = document.getElementById('progressText');
+
+    function updateCard() {
+        // Karte zurücksetzen (umdrehen auf Vorderseite)
+        cardEl.classList.remove('flipped');
+        
+        setTimeout(() => {
+            const currentCard = cards[currentIndex];
+            frontTextEl.innerText = currentCard.front;
+            frontNoteEl.innerText = currentCard.frontNote || "";
+            backTextEl.innerText = currentCard.back;
+            backNoteEl.innerText = currentCard.backNote || "";
+            
+            progressEl.innerText = `${currentIndex + 1} / ${cards.length}`;
+            
+            // Schriftgröße anpassen
+            adjustFontSize(frontTextEl);
+            adjustFontSize(backTextEl);
+        }, 150);
+    }
+
+    function adjustFontSize(el) {
+        const length = el.innerText.length;
+        if (length > 25) {
+            el.style.fontSize = "1.2rem";
+        } else if (length > 15) {
+            el.style.fontSize = "1.6rem";
+        } else {
+            el.style.fontSize = "2rem";
+        }
+    }
+
+    function flipCard() {
+        cardEl.classList.toggle('flipped');
+    }
+
+    function nextCard() {
+        if (currentIndex < cards.length - 1) {
+            currentIndex++;
+            updateCard();
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCard();
+        }
+    }
+
+    function resetToStart() {
+        currentIndex = 0;
+        updateCard();
+    }
+
+    function shuffleCards() {
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        currentIndex = 0;
+        updateCard();
+    }
+
+    // Tastatursteuerung
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        } else if (e.code === 'ArrowRight') {
+            nextCard();
+        } else if (e.code === 'ArrowLeft') {
+            prevCard();
+        } else if (e.code === 'Home') {
+            resetToStart();
+        }
+    });
+
+    // Initialisierung
+    updateCard();
+</script>
+
+</body>
+</html>
