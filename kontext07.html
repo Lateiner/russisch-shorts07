@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Quiz: Der richtige Kontext</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --primary: #4a90e2;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .quiz-card {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .situation-box {
+            background: #e1f5fe;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            border-left: 5px solid var(--primary);
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--dark);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f0f7ff;
+        }
+
+        .option-btn.correct {
+            background-color: var(--success) !important;
+            color: white;
+            border-color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error) !important;
+            color: white;
+            border-color: var(--error);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            min-height: 50px;
+            font-weight: 500;
+        }
+
+        .btn-next {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .quiz-card { padding: 20px; }
+            .option-btn { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div class="progress-bar"><div id="progress"></div></div>
+    <h2 id="question-title">Situation:</h2>
+    <div class="situation-box" id="situation">Lade Aufgabe...</div>
+    
+    <div class="options-container" id="options">
+        <!-- Buttons werden per JS geladen -->
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="btn-next" id="nextBtn" onclick="loadQuestion()">Nächste Frage</button>
+</div>
+
+<script>
+    const questions = [
+        {
+            situation: "Du sitzt am Esstisch und reichst deiner Schwester das Salz.",
+            options: ["На", "Держи", "Возьмите"],
+            correct: "На",
+            explain: "Richtig! 'На' ist die kürzeste Form beim einfachen Reichen."
+        },
+        {
+            situation: "Dein Freund kommt mit vollen Händen zur Tür. Du nimmst ihm eine schwere Tasche ab, damit er den Schlüssel suchen kann, und sagst: 'Hier, gib her' (während du sie greifst).",
+            options: ["Возьмите", "На", "Держи"],
+            correct: "Держи",
+            explain: "Genau! 'Держи' passt gut, wenn etwas gehalten oder aktiv übernommen werden soll."
+        },
+        {
+            situation: "Du arbeitest im Hotel und reichst einem Gast seinen Zimmerschlüssel.",
+            options: ["Держи", "Возьмите", "На"],
+            correct: "Возьмите",
+            explain: "Richtig! Bei Fremden oder in formellen Situationen nutzt man die Höflichkeitsform."
+        },
+        {
+            situation: "Du wirfst deinem Kumpel den Autoschlüssel zu.",
+            options: ["На", "Держи", "Возьмите"],
+            correct: "Держи",
+            explain: "Richtig! 'Держи' wird oft beim Zuwerfen oder Festhalten benutzt (Halt fest!)."
+        },
+        {
+            situation: "Du bietest einem Kind ein Stück Schokolade an.",
+            options: ["Возьмите", "Держи", "На"],
+            correct: "На",
+            explain: "Richtig! 'На' ist die klassische Art, jemandem etwas anzubieten."
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    const situationEl = document.getElementById('situation');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressEl = document.getElementById('progress');
+
+    function loadQuestion() {
+        if (currentIdx >= questions.length) {
+            showResult();
+            return;
+        }
+
+        const q = questions[currentIdx];
+        situationEl.innerText = q.situation;
+        feedbackEl.innerText = "";
+        nextBtn.style.display = "none";
+        optionsEl.innerHTML = "";
+        
+        // Fortschrittsbalken
+        progressEl.style.width = `${(currentIdx / questions.length) * 100}%`;
+
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedBtn, val) {
+        const q = questions[currentIdx];
+        const buttons = document.querySelectorAll('.option-btn');
+        
+        buttons.forEach(b => b.disabled = true);
+
+        if (val === q.correct) {
+            selectedBtn.classList.add('correct');
+            feedbackEl.innerText = q.explain;
+            feedbackEl.style.color = "var(--success)";
+            score++;
+        } else {
+            selectedBtn.classList.add('wrong');
+            feedbackEl.innerText = "Nicht ganz richtig. Passender wäre: " + q.correct;
+            feedbackEl.style.color = "var(--error)";
+            
+            // Richtigen Button markieren
+            buttons.forEach(b => {
+                if (b.innerText === q.correct) b.classList.add('correct');
+            });
+        }
+
+        currentIdx++;
+        nextBtn.style.display = "inline-block";
+    }
+
+    function showResult() {
+        progressEl.style.width = "100%";
+        situationEl.innerHTML = `<h3>Training beendet!</h3>Du hast <b>${score} von ${questions.length}</b> Situationen richtig eingeschätzt.`;
+        optionsEl.innerHTML = "";
+        nextBtn.innerText = "Erneut starten";
+        nextBtn.style.display = "inline-block";
+        nextBtn.onclick = () => location.reload();
+        feedbackEl.innerText = "";
+    }
+
+    // Initialstart
+    loadQuestion();
+</script>
+
+</body>
+</html>
