@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Übung: 6 Szenen</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --bg-color: #f4f7f6;
+            --reset-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { text-align: center; font-size: 1.4rem; margin: 10px 0; }
+        .instruction { text-align: center; max-width: 600px; margin-bottom: 20px; font-size: 0.95rem; }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Wort-Pool sticky am oberen Rand für Mobile */
+        .word-pool {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        .word {
+            padding: 12px 30px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 8px;
+            cursor: grab;
+            font-weight: bold;
+            font-size: 1.3rem;
+            touch-action: none;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .scenes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .scene-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+        }
+
+        .scene-image {
+            font-size: 2.5rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        .scene-text {
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.3;
+            color: #555;
+        }
+
+        .drop-zone {
+            height: 45px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-weight: bold;
+            color: #95a5a6;
+            background: #fff;
+        }
+
+        .drop-zone.hover { border-color: var(--accent-color); background: #ebf5fb; }
+        .drop-zone.correct { 
+            border-color: var(--success-color); 
+            background-color: #d4efdf; 
+            color: var(--success-color); 
+            border-style: solid; 
+        }
+
+        .feedback-container {
+            text-align: center;
+            margin: 20px 0;
+            padding-bottom: 40px;
+        }
+
+        .feedback { font-weight: bold; margin-bottom: 15px; min-height: 1.2rem; }
+
+        .btn-reset {
+            padding: 12px 30px;
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .scenes-grid { grid-template-columns: 1fr; }
+            .word { padding: 10px 20px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Russisch üben: Etwas übergeben</h1>
+    <p class="instruction">Ziehe das richtige Wort in die jeweilige Szene. Überlege: Reicht man etwas nur locker (На) oder soll es jemand festhalten/übernehmen (Держи)?</p>
+
+    <div class="container">
+        <div class="word-pool" id="wordPool">
+            <div class="word" draggable="true" id="word1">На</div>
+            <div class="word" draggable="true" id="word2">Держи</div>
+        </div>
+
+        <div class="scenes-grid">
+            <!-- 1 -->
+            <div class="scene-card">
+                <div class="scene-image">☕</div>
+                <p class="scene-text">Du reichst einem Freund eine Tasse Tee ("Hier").</p>
+                <div class="drop-zone" data-expected="На">Ablegen</div>
+            </div>
+            <!-- 2 -->
+            <div class="scene-card">
+                <div class="scene-image">📦</div>
+                <p class="scene-text">Ein schweres Paket, das jemand festhalten soll.</p>
+                <div class="drop-zone" data-expected="Держи">Ablegen</div>
+            </div>
+            <!-- 3 -->
+            <div class="scene-card">
+                <div class="scene-image">✏️</div>
+                <p class="scene-text">Du gibst jemandem kurz einen Bleistift.</p>
+                <div class="drop-zone" data-expected="На">Ablegen</div>
+            </div>
+            <!-- 4 -->
+            <div class="scene-card">
+                <div class="scene-image">🔑</div>
+                <p class="scene-text">Du wirfst jemandem den Schlüssel zu ("Fang/Halt").</p>
+                <div class="drop-zone" data-expected="Держи">Ablegen</div>
+            </div>
+            <!-- 5 -->
+            <div class="scene-card">
+                <div class="scene-image">🍬</div>
+                <p class="scene-text">Du bietest jemandem ein Bonbon an.</p>
+                <div class="drop-zone" data-expected="На">Ablegen</div>
+            </div>
+            <!-- 6 -->
+            <div class="scene-card">
+                <div class="scene-image">🐕</div>
+                <p class="scene-text">Du gibst jemandem kurz die Leine ("Halt mal").</p>
+                <div class="drop-zone" data-expected="Держи">Ablegen</div>
+            </div>
+        </div>
+
+        <div class="feedback-container">
+            <div id="feedback" class="feedback"></div>
+            <button class="btn-reset" onclick="resetGame()">Neustart</button>
+        </div>
+    </div>
+
+    <script>
+        const words = document.querySelectorAll('.word');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const feedback = document.getElementById('feedback');
+
+        // Drag & Drop
+        words.forEach(word => {
+            word.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text', e.target.innerText);
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                zone.classList.add('hover');
+            });
+            zone.addEventListener('dragleave', () => zone.classList.remove('hover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('hover');
+                handleDrop(zone, e.dataTransfer.getData('text'));
+            });
+        });
+
+        function handleDrop(zone, text) {
+            if (zone.getAttribute('data-expected') === text) {
+                zone.innerText = text;
+                zone.classList.add('correct');
+                feedback.innerText = "Richtig!";
+                feedback.style.color = "#27ae60";
+                checkWin();
+            } else {
+                feedback.innerText = "Das passt hier nicht so gut.";
+                feedback.style.color = "#e74c3c";
+            }
+        }
+
+        function checkWin() {
+            if (Array.from(dropZones).every(z => z.classList.contains('correct'))) {
+                feedback.innerText = "Super! Du hast alle 6 Situationen richtig erkannt.";
+            }
+        }
+
+        function resetGame() {
+            dropZones.forEach(z => {
+                z.innerText = "Ablegen";
+                z.classList.remove('correct', 'hover');
+            });
+            feedback.innerText = "";
+        }
+
+        // Mobile Touch Support
+        words.forEach(word => {
+            word.addEventListener('touchstart', e => {
+                const touch = e.touches[0];
+                const shiftX = touch.clientX - word.getBoundingClientRect().left;
+                const shiftY = touch.clientY - word.getBoundingClientRect().top;
+                
+                const ghost = word.cloneNode(true);
+                ghost.style.position = 'fixed';
+                ghost.style.opacity = '0.8';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.zIndex = '1000';
+                document.body.appendChild(ghost);
+
+                function moveAt(clientX, clientY) {
+                    ghost.style.left = clientX - shiftX + 'px';
+                    ghost.style.top = clientY - shiftY + 'px';
+                }
+
+                function onTouchMove(ev) {
+                    moveAt(ev.touches[0].clientX, ev.touches[0].clientY);
+                }
+
+                document.addEventListener('touchmove', onTouchMove);
+
+                word.ontouchend = (ev) => {
+                    document.removeEventListener('touchmove', onTouchMove);
+                    const touchEnd = ev.changedTouches[0];
+                    ghost.remove();
+                    
+                    const target = document.elementFromPoint(touchEnd.clientX, touchEnd.clientY);
+                    const zone = target ? target.closest('.drop-zone') : null;
+                    
+                    if (zone) handleDrop(zone, word.innerText);
+                };
+            });
+        });
+    </script>
+</body>
+</html>
